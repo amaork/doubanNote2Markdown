@@ -1,6 +1,5 @@
 #include <iostream>
 #include <fstream>
-#include "debug.h"
 #include "xml_db.h"
 #include "xml_parser.h"
 
@@ -32,7 +31,7 @@ int main(int argc, char **argv)
 	/* Check params */
 	if (argc != 3){
 
-		__debug_mesg__("Usage:%s input_file_name(*.xml) output_file_name(*.md)\n", argv[0]);
+		fprintf(stdout, "Usage:%s input_file_name(*.xml) output_file_name(*.md)\n", argv[0]);
 		return 0;
 	}
 
@@ -41,21 +40,21 @@ int main(int argc, char **argv)
 
 	if (!markdown){
 
-		__DEBUG_MESG__("Open markdown file error!");
+		fprintf(stderr, "Open markdown file error!\n");
 		return -1;
 	}
 
 	/* Load note from xml file anc check */
 	if (xml.LoadFile(argv[1]) != XML_NO_ERROR){
 
-		__debug_mesg__("Load user note file error %s:%s\n", xml.GetErrorStr1(), xml.GetErrorStr2());
+		fprintf(stderr, "Load user note file error %s:%s\n", xml.GetErrorStr1(), xml.GetErrorStr2());
 		return -1;
 	}
 
 	/*	Find root element */
 	if ((root = xml.RootElement()) == NULL){
 
-		__DEBUG_MESG__("Do not find xml root node!");
+		fprintf(stderr, "Do not find xml root node!\n");
 		return -1;
 	}
 
@@ -65,7 +64,7 @@ int main(int argc, char **argv)
 		/* Find book name */	
 		if ((book_name = book->Attribute(BOOK_NAME_ATTR)) == NULL){
 
-			__DEBUG_MESG__("UNfound books name!");
+			fprintf(stderr, "UNfound books name!\n");
 			continue;
 		}
 
@@ -81,7 +80,7 @@ int main(int argc, char **argv)
 			/*	Find note idx */
 			if (!(note_idx = note->IntAttribute(NOTE_IDX_ATTR))){
 
-				__DEBUG_MESG__("UNfound note id!");
+				fprintf(stderr, "UNfound note id!\n");
 				continue;
 			}
 
@@ -99,7 +98,7 @@ int main(int argc, char **argv)
 			/*	Parser note */
 			if (!parser->parse()){
 
-				__debug_mesg__("Parser book[%s] note[%d] error!\n", book_name, note_idx);
+				fprintf(stderr, "Parser book[%s] note[%d] error!\n", book_name, note_idx);
 				goto out;
 			}
 

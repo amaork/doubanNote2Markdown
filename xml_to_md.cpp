@@ -1,8 +1,8 @@
 #include <iostream>
 #include <fstream>
+#include <string>
 #include "xml_db.h"
 #include "xml_parser.h"
-
 
 typedef struct{
 	unsigned int page;
@@ -10,10 +10,11 @@ typedef struct{
 	unsigned char note[0x4000];
 }NOTE_INFO, *P_NOTE_INFO;
 
-
 using namespace std;
 using namespace tinyxml2;
 
+
+/* Main functions */
 int main(int argc, char **argv)
 {
 	XMLDocument xml;
@@ -23,10 +24,17 @@ int main(int argc, char **argv)
 	XMLPrinter printer(stderr);
 
 //	int flag = 0;
-	NOTE_INFO 	ndata;
+	NOTE_INFO ndata;
 	XML_PARSER	*parser = NULL;
 	unsigned int note_idx = 0;
 	const char *book_name = NULL;
+
+	/* Find context start and end */
+	string ref_start_key(REF_START_KEY);
+	string ref_end_key(REF_STOP_KEY);
+	string all_note, context, remark;
+	string::size_type context_start = string::npos;
+	string::size_type context_end   = string::npos;
 
 	/* Check params */
 	if (argc != 3){
@@ -75,7 +83,7 @@ int main(int argc, char **argv)
 		for (note = book->FirstChildElement(NOTE_KEY); note; note = note->NextSiblingElement(NOTE_KEY)){
 
 			/*	Clean data */
-			bzero(&ndata, sizeof(ndata));
+			bzero(&ndata, sizeof(NOTE_INFO));
 		
 			/*	Find note idx */
 			if (!(note_idx = note->IntAttribute(NOTE_IDX_ATTR))){
@@ -94,20 +102,45 @@ int main(int argc, char **argv)
 
 			/*	Print parser info */
 			//parser->print(flag, cerr);
-
+						
 			/*	Parser note */
 			if (!parser->parse()){
 
+				/* Parser error, delete and continue */
 				fprintf(stderr, "Parser book[%s] note[%d] error!\n", book_name, note_idx);
-				goto out;
+				delete parser;
+				continue;
 			}
 
+			/* 	Process context and remark */
+			all_note = string((const char*)ndata.note);
+
+			/* Find start and end */
+			context_start = all_note.find(ref_start_key);
+			context_end   = all_note.find(ref_end_key);
+
+			/* Split note as context and remark */
+			if (context_start != string::npos && context_end != string::npos){
+	
+				context = all_note.substr(context_start + ref_start_key.size(), context_end - ref_end_key.size() + 1);
+				remark  = all_note.substr(context_end + ref_end_key.size());
+			}
+			/* Only have remark, do not have context */
+			else if (context_start == context_end && context_start == string::npos){
+
+				context = all_note;
+			}
+		
 			/*	Write note to markdown */
 			markdown << "## [P" << ndata.page << "](" << ndata.url << ")" << endl;
-			markdown << ndata.note << endl << endl << endl;
 
-			out:
-			delete parser;
+			/* Context */
+			markdown << context << endl << endl;
+
+			/* Remark */
+			markdown << "<font color=#7f7f7f>" << endl;
+			markdown << remark << endl << endl <<endl;
+			markdown << "</font>" << endl;
 		}
 
 	}
@@ -117,5 +150,3 @@ int main(int argc, char **argv)
 
 	return 0;
 }
-
-

@@ -10,7 +10,7 @@
 #define URL_KEY			"url"
 #define PAGE_KEY		"page_no"
 #define CONTENT_KEY		"content"
-#define REF_START_KEY	"原文开始"
-#define REF_STOP_KEY	"原文结束"
+#define REF_START_KEY	"<原文开始>"
+#define REF_STOP_KEY	"</原文结束>"
 
 #endif

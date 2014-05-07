@@ -1,8 +1,11 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
+#include <algorithm>
 #include "xml_db.h"
 #include "xml_parser.h"
+#include "note_manager.h"
 
 typedef struct{
 	unsigned int page;
@@ -28,28 +31,13 @@ int main(int argc, char **argv)
 	XML_PARSER	*parser = NULL;
 	unsigned int note_idx = 0;
 	const char *book_name = NULL;
-
-	/* Find context start and end */
-	string ref_start_key(REF_START_KEY);
-	string ref_end_key(REF_STOP_KEY);
-	string all_note, context, remark;
-	string::size_type context_start = string::npos;
-	string::size_type context_end   = string::npos;
+	Note_Manager *note_manager = NULL;
 
 	/* Check params */
-	if (argc != 3){
+	if (argc != 2){
 
-		fprintf(stdout, "Usage:%s input_file_name(*.xml) output_file_name(*.md)\n", argv[0]);
+		fprintf(stdout, "Usage:%s input_file_name(*.xml)\n", argv[0]);
 		return 0;
-	}
-
-	/* Markdown format output */
-	ofstream markdown(argv[2], ofstream::out);
-
-	if (!markdown){
-
-		fprintf(stderr, "Open markdown file error!\n");
-		return -1;
 	}
 
 	/* Load note from xml file anc check */
@@ -66,6 +54,9 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
+	/* Alloc a note manager */
+	note_manager = new Note_Manager;
+
 	/*	First level process book  */
 	for (book = root->FirstChildElement(BOOK_KEY); book; book = book->NextSiblingElement(BOOK_KEY)){
 
@@ -75,9 +66,6 @@ int main(int argc, char **argv)
 			fprintf(stderr, "UNfound books name!\n");
 			continue;
 		}
-
-		/* Write book name to markdown */
-		markdown << "# " << book_name << endl;
 
 		/* Second level process each book note */
 		for (note = book->FirstChildElement(NOTE_KEY); note; note = note->NextSiblingElement(NOTE_KEY)){
@@ -112,41 +100,16 @@ int main(int argc, char **argv)
 				continue;
 			}
 
-			/* 	Process context and remark */
-			all_note = string((const char*)ndata.note);
-
-			/* Find start and end */
-			context_start = all_note.find(ref_start_key);
-			context_end   = all_note.find(ref_end_key);
-
-			/* Split note as context and remark */
-			if (context_start != string::npos && context_end != string::npos){
-	
-				context = all_note.substr(context_start + ref_start_key.size(), context_end - ref_end_key.size() + 1);
-				remark  = all_note.substr(context_end + ref_end_key.size());
-			}
-			/* Only have remark, do not have context */
-			else if (context_start == context_end && context_start == string::npos){
-
-				context = all_note;
-			}
-		
-			/*	Write note to markdown */
-			markdown << "## [P" << ndata.page << "](" << ndata.url << ")" << endl;
-
-			/* Context */
-			markdown << context << endl << endl;
-
-			/* Remark */
-			markdown << "<font color=#7f7f7f>" << endl;
-			markdown << remark << endl << endl <<endl;
-			markdown << "</font>" << endl;
+			/* Add note to note manager */
+			note_manager->add_note(book_name, Note((const char*)ndata.note, (const char*)ndata.url, ndata.page));
 		}
 
 	}
 
-	markdown.flush();
-	markdown.close();
+	/* Markdown out put */
+	note_manager->markdown_output(string(argv[1]).append(".md"));	
+
+	delete note_manager;
 
 	return 0;
 }

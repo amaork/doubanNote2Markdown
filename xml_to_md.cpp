@@ -26,7 +26,6 @@ int main(int argc, char **argv)
 	XMLElement* note = NULL;
 	XMLPrinter printer(stderr);
 
-//	int flag = 0;
 	NOTE_INFO ndata;
 	XML_PARSER	*parser = NULL;
 	unsigned int note_idx = 0;
@@ -89,10 +88,10 @@ int main(int argc, char **argv)
 			parser->add_rule(CONTENT_KEY, ndata.note);
 
 			/*	Print parser info */
-			//parser->print(flag, cerr);
+			//cout << *parser << endl;
 						
 			/*	Parser note */
-			if (!parser->parse()){
+			if (!parser->parse(false, cout)){
 
 				/* Parser error, delete and continue */
 				fprintf(stderr, "Parser book[%s] note[%d] error!\n", book_name, note_idx);

@@ -21,10 +21,6 @@ class XML_PARSE_RULE{
 
 		/*	Check this rule is valid */
 		bool check(void);
-		
-		/*	Print this rule */
-		void print(ostream &os = cout) {os << "is_str\t" << is_str << "\tkey:\t" << key << endl;}
-		
 
 		/* Data */
 		string key;
@@ -33,23 +29,23 @@ class XML_PARSE_RULE{
 		unsigned char *c_value;	
 };
 
+std::ostream& operator<<(std::ostream &out, const XML_PARSE_RULE &rule);
+
+/* Typedef */
+typedef vector< XML_PARSE_RULE> Parser_rule;
+
+
 /* XML parser */
 class XML_PARSER{
 
 	public:
 
 		/*	Constructor */
-		XML_PARSER(const string &desc, bool debug = false);
-		XML_PARSER(const string &desc, XMLElement *node, bool debug = false);
+		XML_PARSER(const string &desc);
+		XML_PARSER(const string &desc, XMLElement *node);
 
 		/*	Parse xml */
 		bool parse(bool debug = false, ostream &debug_os = cerr);
-
-		/*	Dispaly parser info */
-		void print(int &flag, ostream &os = cout);
-
-		/*	Debug opetion */
-		void set_debug(bool st) {debug_option = st; }
 
 		/* 	Set xml root node */	
 		void set_root(XMLElement *node){ root = node;}
@@ -62,22 +58,22 @@ class XML_PARSER{
 		void add_rule(const char *key, unsigned int *value);
 		void add_rule(const char *key, unsigned char *value);
 
-	private:
-
-		/*	Check parser */
-		bool check(void);
-
 		/*	xml parser root node */
 		XMLElement *root;
-
-		/*	Debug options */
-		bool debug_option;
 
 		/*	xml parser desc */
 		string parser_desc;
 
 		/*	xml parse rules */
-		vector< XML_PARSE_RULE> parser_rules;
+		Parser_rule  parser_rules;
+
+	private:
+
+		/*	Check parser */
+		bool check(void);
+
 };
+
+std::ostream& operator<<(std::ostream &out, const XML_PARSER &parser);
 
 #endif

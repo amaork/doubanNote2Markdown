@@ -4,6 +4,21 @@
 #include "note_manager.h"
 
 /**************************************************************************************
+	@brief	:	Delete space, table, enter charactor at string before and end
+**************************************************************************************/
+string trim(string str)
+{
+	/* Delete space,table and enter  */
+	const string del = " \t\n";
+
+	/* Delte tail */
+	string tmp = str.erase(str.find_last_not_of(del) +1);
+
+	/* Delete head */
+	return tmp.erase(0, tmp.find_first_not_of(del));
+}
+
+/**************************************************************************************
 	@brief	:	Note constructor
 **************************************************************************************/
 Note::Note(const char *note, const char *note_url, unsigned int note_page)
@@ -20,13 +35,13 @@ Note::Note(const char *note, const char *note_url, unsigned int note_page)
 	/* Split note as context and remark */
 	if (start != string::npos && end != string::npos){
 	
-		context = all_note.substr(start + ref_start_key.size(), end - ref_end_key.size() + 1);
-		remark  = all_note.substr(end + ref_end_key.size());
+		context = trim(all_note.substr(start + ref_start_key.size(), end - ref_end_key.size() + 1));
+		remark  = trim(all_note.substr(end + ref_end_key.size()));
 	}
 	/* Only have remark, do not have context */
 	else if (start == end && start == string::npos){
 
-		context = all_note;
+		remark = trim(all_note);
 	}
 
 	/* Copy url and page */
@@ -43,14 +58,28 @@ ostream &operator << (ostream& out, const Note &note)
 	out << "## [P" << note.page << "](" << note.url << ")" << endl;
 			
 	/* Write context */	
-	out << note.context << endl << endl;
+	if (note.context.size()){
+
+		out << note.context << endl << endl;
+	}
 
 	/* Write remark */
-	out << "<font color=#7f7f7f>" << endl;
-	out	<< note.remark << endl << endl <<endl;
-	out << "</font>" << endl;
+	if (note.remark.size()){
+
+		out << "<font color=#7f7f7f>" << endl;
+		out	<< note.remark << endl;
+		out << "</font>" << endl;
+	}
 
 	return out;
+}
+
+/**************************************************************************************
+	@brief	:	Comparison function to be uesd to sort by page number
+**************************************************************************************/
+bool is_page_number_little(const Note &n1, const Note &n2)
+{
+	return n1.page < n2.page;	
 }
 
 /**************************************************************************************
@@ -149,6 +178,8 @@ ostream &operator << (ostream& out, const Note_Manager &nm)
 *************************************************************************************/
 bool Note_Manager::markdown_output(const string file_name)
 {
+	Note_book_list::iterator it;
+
 	/* Markdown format output */
 	ofstream markdown(file_name.c_str(), ofstream::out);
 
@@ -156,6 +187,13 @@ bool Note_Manager::markdown_output(const string file_name)
 
 		cout << "Open markdown file error!" << endl;
 		return false;
+	}
+
+	/* Sort note book note, make it inorder by page number */
+	for (it = note_book.begin(); it != note_book.end(); it++){
+		
+		/* Sort notes, make it in order by page number */
+		sort(it->second.begin(), it->second.end(), is_page_number_little);
 	}
 
 	/* Markdown output */

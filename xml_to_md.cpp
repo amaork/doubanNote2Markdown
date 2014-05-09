@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 	}
 
 	/* Markdown out put */
-	note_manager->markdown_output(string(argv[1]).append(".md"));	
+	note_manager->markdown_output(string(argv[1]));	
 
 	delete note_manager;
 

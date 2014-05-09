@@ -7,13 +7,14 @@
 1. 压缩包中包含有源文件和Makefile，解压之后直接执行make即可，已经在Linux和OSX 上测试通过
 2. make之后得到一个可执行文件**xml\_to\_md**
 3. **xml\_to\_md**需要一个参数：从豆瓣导出的xml文件路径，文件扩展名是*.xml
-4. 执行成功后，将在当前目录生成Markdown文件，文件名称为，原文件名.md
+4. 执行成功后，将在当前目录生成Markdown文件，扩展名称为"*.md"
 
 
 ### 例子：
 > **./xml\_to\_md douban.xml**
 
-> **生成的Markdown文件名称为：douban.xml.md**
+> **生成的Markdown文件名称为：douban.md**
+
 
 ## 二、格式说明
 

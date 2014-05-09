@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <fstream>
+#include <sstream>
 #include "xml_db.h"
 #include "note_manager.h"
 
@@ -18,6 +19,48 @@ string trim(string str)
 	return tmp.erase(0, tmp.find_first_not_of(del));
 }
 
+
+/**************************************************************************************
+	@brief	:	Output context with url detected
+**************************************************************************************/
+void markdown_output_with_url_detect(ostream& out, const string &txt, const string &skey, const string &ekey)
+{
+	string url;
+	string context = txt;
+	string::size_type start, end;
+
+	/* Process contexts */
+	while (context.size()){
+
+		/* Find url start */
+		if ((start = context.find(skey)) != string::npos && (end = context.substr(start, context.size()).find(ekey)) != string::npos){
+
+			/* Output the context before url start */
+			if (start){
+				out << context.substr(0, start) << endl;
+			}
+
+			/* Output url */
+			url = context.substr(start, end + ekey.size());
+
+			out << "![" << url << "](" << url << ")" << endl;
+
+			/* Remove already process sting */
+			context.erase(0, start + end + ekey.size());
+
+			/* Process next */
+			continue;
+		}
+
+
+		/* There's no url being found */
+		out << context << endl;
+		context.erase(0, context.size());
+	
+	} /* end of while */
+}
+
+
 /**************************************************************************************
 	@brief	:	Note constructor
 **************************************************************************************/
@@ -30,7 +73,6 @@ Note::Note(const char *note, const char *note_url, unsigned int note_page)
 	/* Find context start and end */
 	string::size_type start = all_note.find(ref_start_key);
 	string::size_type end   = all_note.find(ref_end_key); 
-
 	
 	/* Split note as context and remark */
 	if (start != string::npos && end != string::npos){
@@ -54,20 +96,26 @@ Note::Note(const char *note, const char *note_url, unsigned int note_page)
 **************************************************************************************/
 ostream &operator << (ostream& out, const Note &note)
 {
+	string jpg;
+	string jpg_end_key(".jpg");
+	string jpg_start_key("http://");
+
 	/* Write page and url */
 	out << "## [P" << note.page << "](" << note.url << ")" << endl;
 			
 	/* Write context */	
 	if (note.context.size()){
 
-		out << note.context << endl << endl;
+		//out << note.context << endl << endl;
+		markdown_output_with_url_detect(out, note.context, jpg_start_key, jpg_end_key);
 	}
 
 	/* Write remark */
 	if (note.remark.size()){
 
 		out << "<font color=#7f7f7f>" << endl;
-		out	<< note.remark << endl;
+		//out	<< note.remark << endl;
+		markdown_output_with_url_detect(out, note.remark, jpg_start_key, jpg_end_key);
 		out << "</font>" << endl;
 	}
 
@@ -147,19 +195,62 @@ Note_list Note_Manager::get_book_notes(const char *book)
 
 
 /*************************************************************************************
+	@brief	:	Output a anchor 
+*************************************************************************************/
+inline void add_anchor(ostream &out, const string &context, const string &id, bool spc=false)
+{
+	/* Anchor */
+	out << "<a id = \"" << id << "\">" << endl;
+	out << context << endl;
+	out << "</a>" << endl;
+
+	/* Split line */
+	if (spc){
+		
+		out << "---" << endl;
+	}
+}
+
+/*************************************************************************************
+	@brief	:	Output a anchor 
+*************************************************************************************/
+inline void add_int_jump(ostream &out, const string &context, const string &id, const string &pre="")
+{
+	/* Jump */	
+	out << pre << " [" << context << "](#" << id << ")" << endl;
+}
+
+
+/*************************************************************************************
 	@brief	:	Note_Manager overload output << operator
 *************************************************************************************/
 ostream &operator << (ostream& out, const Note_Manager &nm)
 {
 	/* Create a iterator point to first book */
+	stringstream format;
+	unsigned int book_idx;
 	Note_list::const_iterator note_it;
 	Note_book_list::const_iterator book_it;
+
+	/* Out puts contents */
+	add_anchor(out, "# 目录", "目录", true);	
+	
+	/* Output each books name and it nots number */
+	for (book_idx = 1, book_it = nm.note_book.begin(); book_it != nm.note_book.end(); book_it++, book_idx++){
+
+		format.str("");
+		format << book_idx << ". " << book_it->first;
+		add_int_jump(out, format.str(), book_it->first, "###");
+	}
 
 	/* First level, process book */
 	for (book_it = nm.note_book.begin(); book_it != nm.note_book.end(); book_it++){
 
-		/* Out put book name*/
-		out << "# " << book_it->first << endl;
+		/* Out put book name, with anchor*/
+		add_anchor(out, "# " + book_it->first, book_it->first);
+
+		/* Add a internal jump, back to contents */
+		add_int_jump(out, "返回目录", "目录", "###");
 
 		/* Second level process note */
 		for (note_it = book_it->second.begin(); note_it != book_it->second.end(); note_it++){
@@ -178,10 +269,23 @@ ostream &operator << (ostream& out, const Note_Manager &nm)
 *************************************************************************************/
 bool Note_Manager::markdown_output(const string file_name)
 {
+	string md_extd(".md");
+	string xml_extd(".xml");
 	Note_book_list::iterator it;
+	string output_name = file_name;
+
+	/* Process filename */
+	if (file_name.find(xml_extd) != string::npos){
+
+		output_name.replace(file_name.find_first_of(xml_extd), xml_extd.size(), md_extd);
+	}
+	else{
+
+		output_name += md_extd; 
+	}
 
 	/* Markdown format output */
-	ofstream markdown(file_name.c_str(), ofstream::out);
+	ofstream markdown(output_name.c_str(), ofstream::out);
 
 	if (!markdown){
 

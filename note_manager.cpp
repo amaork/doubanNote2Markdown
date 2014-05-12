@@ -21,9 +21,9 @@ string trim(string str)
 
 
 /**************************************************************************************
-	@brief	:	Output context with url detected
+	@brief	:	Output markdown context with url detect
 **************************************************************************************/
-void markdown_output_with_url_detect(ostream& out, const string &txt, const string &skey, const string &ekey)
+void markdown_output(ostream& out, const string &txt, const string &skey, const string &ekey)
 {
 	string url;
 	string context = txt;
@@ -107,7 +107,7 @@ ostream &operator << (ostream& out, const Note &note)
 	if (note.context.size()){
 
 		//out << note.context << endl << endl;
-		markdown_output_with_url_detect(out, note.context, jpg_start_key, jpg_end_key);
+		markdown_output(out, note.context, jpg_start_key, jpg_end_key);
 	}
 
 	/* Write remark */
@@ -115,7 +115,7 @@ ostream &operator << (ostream& out, const Note &note)
 
 		out << "<font color=#7f7f7f>" << endl;
 		//out	<< note.remark << endl;
-		markdown_output_with_url_detect(out, note.remark, jpg_start_key, jpg_end_key);
+		markdown_output(out, note.remark, jpg_start_key, jpg_end_key);
 		out << "</font>" << endl;
 	}
 
@@ -197,7 +197,7 @@ Note_list Note_Manager::get_book_notes(const char *book)
 /*************************************************************************************
 	@brief	:	Output a anchor 
 *************************************************************************************/
-inline void add_anchor(ostream &out, const string &context, const string &id, bool spc=false)
+inline void markdown_add_anchor(ostream &out, const string &context, const string &id, bool spc=false)
 {
 	/* Anchor */
 	out << "<a id = \"" << id << "\">" << endl;
@@ -214,7 +214,7 @@ inline void add_anchor(ostream &out, const string &context, const string &id, bo
 /*************************************************************************************
 	@brief	:	Output a anchor 
 *************************************************************************************/
-inline void add_int_jump(ostream &out, const string &context, const string &id, const string &pre="")
+inline void markdown_add_intjump(ostream &out, const string &context, const string &id, const string &pre="")
 {
 	/* Jump */	
 	out << pre << " [" << context << "](#" << id << ")" << endl;
@@ -233,24 +233,24 @@ ostream &operator << (ostream& out, const Note_Manager &nm)
 	Note_book_list::const_iterator book_it;
 
 	/* Out puts contents */
-	add_anchor(out, "# 目录", "目录", true);	
+	markdown_add_anchor(out, "# 目录", "目录", true);	
 	
 	/* Output each books name and it nots number */
 	for (book_idx = 1, book_it = nm.note_book.begin(); book_it != nm.note_book.end(); book_it++, book_idx++){
 
 		format.str("");
 		format << book_idx << ". " << book_it->first;
-		add_int_jump(out, format.str(), book_it->first, "###");
+		markdown_add_intjump(out, format.str(), book_it->first, "###");
 	}
 
 	/* First level, process book */
 	for (book_it = nm.note_book.begin(); book_it != nm.note_book.end(); book_it++){
 
 		/* Out put book name, with anchor*/
-		add_anchor(out, "# " + book_it->first, book_it->first);
+		markdown_add_anchor(out, "# " + book_it->first, book_it->first);
 
 		/* Add a internal jump, back to contents */
-		add_int_jump(out, "返回目录", "目录", "###");
+		markdown_add_intjump(out, "返回目录", "目录", "###");
 
 		/* Second level process note */
 		for (note_it = book_it->second.begin(); note_it != book_it->second.end(); note_it++){

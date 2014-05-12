@@ -22,6 +22,9 @@
 *.xml
 *.md
 
-#Target
+# Depend
+*.d
+
+# Target
 xml_to_md
 note_manager_test

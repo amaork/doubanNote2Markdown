@@ -58,5 +58,7 @@ class Note_Manager{
 
 std::ostream& operator<<(std::ostream&, const Note_Manager& nm);
 
+/* Output markdown centext with detect image url */
+void markdown_output(ostream& out, const string &txt, const string &skey, const string &ekey);
 
 #endif

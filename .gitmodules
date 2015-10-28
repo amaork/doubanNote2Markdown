@@ -1,0 +1,3 @@
+[submodule "xmlParser"]
+	path = xmlParser
+	url = git@github.com:amaork/xmlParser.git

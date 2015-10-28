@@ -4,13 +4,13 @@
 #include <vector>
 #include <algorithm>
 #include "xml_db.h"
-#include "xml_parser.h"
 #include "note_manager.h"
+#include "xmlParser/xmlParser.h"
 
 typedef struct{
-	unsigned int page;
-	unsigned char url[128];
-	unsigned char note[0x4000];
+	int page;
+	char url[128];
+	char note[0x4000];
 }NOTE_INFO, *P_NOTE_INFO;
 
 using namespace std;
@@ -27,8 +27,8 @@ int main(int argc, char **argv)
 	XMLPrinter printer(stderr);
 
 	NOTE_INFO ndata;
-	XML_PARSER	*parser = NULL;
-	unsigned int note_idx = 0;
+	int note_idx = 0;
+	xmlParser	*parser = NULL;
 	const char *book_name = NULL;
 	Note_Manager *note_manager = NULL;
 
@@ -71,27 +71,29 @@ int main(int argc, char **argv)
 
 			/*	Clean data */
 			bzero(&ndata, sizeof(NOTE_INFO));
+
+			/*	Create a parser */	
+			parser = new xmlParser(book_name);		
+
+			/*	Add parser rules to parser */	
+			parser->addRule(xmlParseRule(URL_KEY, ndata.url));		
+			parser->addRule(xmlParseRule(PAGE_KEY, &ndata.page));
+			parser->addRule(xmlParseRule(CONTENT_KEY, ndata.note));
+			parser->addAttrRule(xmlParseRule(NOTE_IDX_ATTR, &note_idx));
 		
 			/*	Find note idx */
-			if (!(note_idx = note->IntAttribute(NOTE_IDX_ATTR))){
+			if (!parser->parseAttr(note)){
 
 				fprintf(stderr, "UNfound note id!\n");
 				continue;
 			}
 
-			/*	Create a parser */	
-			parser = new XML_PARSER(book_name, note);		
-
-			/*	Add parser rules to parser */	
-			parser->add_rule(URL_KEY, ndata.url);		
-			parser->add_rule(PAGE_KEY, &ndata.page);
-			parser->add_rule(CONTENT_KEY, ndata.note);
-
 			/*	Print parser info */
 			//cout << *parser << endl;
+			//cout << note_idx << ":" << book_name << endl;
 						
 			/*	Parser note */
-			if (!parser->parse(false, cout)){
+			if (!parser->parseValue(note)){
 
 				/* Parser error, delete and continue */
 				fprintf(stderr, "Parser book[%s] note[%d] error!\n", book_name, note_idx);
@@ -101,6 +103,9 @@ int main(int argc, char **argv)
 
 			/* Add note to note manager */
 			note_manager->add_note(book_name, Note((const char*)ndata.note, (const char*)ndata.url, ndata.page));
+
+			/* Delte parser */
+			delete parser;
 		}
 
 	}
